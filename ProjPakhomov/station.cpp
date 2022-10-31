@@ -1,5 +1,6 @@
 #include <iostream>
 #include <string>
+#include <fstream>
 
 #include "station.h"
 
@@ -18,4 +19,13 @@ void station::info()
 	cout << "[ " << id << " ] " << name << ": " << endl;
 	cout << "\t ÷ехов: " << aworks << " / " << tworks << ";" << endl;
 	cout << "\t Ёффективность: " << efficiency << ";" << endl;
+}
+
+void station::finfo(ofstream& file)
+{
+	file << id << endl;
+	file << name << endl;
+	file << tworks << " ";
+	file << aworks << " ";
+	file << efficiency << endl;
 }

@@ -1,5 +1,6 @@
 #include <iostream>
 #include <string>
+#include <fstream>
 
 #include "tube.h"
 
@@ -22,4 +23,13 @@ void tube::info()
 		cout << "\t Статус: В работе;" << endl;
 	else
 		cout << "\t Статус: В ремонте;" << endl;
+}
+
+void tube::finfo(ofstream& file)
+{
+	file << id << endl;
+	file << name << endl;
+	file << length << " ";
+	file << diameter << " ";
+	file << status << endl;
 }

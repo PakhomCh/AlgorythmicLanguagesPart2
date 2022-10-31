@@ -94,6 +94,58 @@ void menu(int blockid = 0) // 0 - END, 1 - MAIN MENU, 2 - CREATE MENU, 3 - VIEW 
 	}
 }
 
+pair <vector<tube>, vector<station>> load(string filename)
+{
+	pair <vector<tube>, vector<station>> data;
+
+	ifstream file;
+	file.open(filename);
+	if (file)
+	{
+		int totalt, totals;
+		read<int>(totalt, file);
+		read<int>(totals, file);
+		for (int i = 0; i < totalt; i++)
+		{
+			data.first.push_back(tube());
+			read<int>(data.first.back().id, file);
+			read(data.first.back().name, file);
+			read<int>(data.first.back().length, file);
+			read<int>(data.first.back().diameter, file);
+			read<bool>(data.first.back().status, file);
+		}
+		for (int i = 0; i < totals; i++)
+		{
+			data.second.push_back(station());
+			read<int>(data.second.back().id, file);
+			read(data.second.back().name, file);
+			read<int>(data.second.back().tworks, file);
+			read<int>(data.second.back().aworks, file);
+			read<float>(data.second.back().efficiency, file);
+		}
+		file.close();
+	}
+	else
+		perror("Requested file not found. Empty file loaded instead.");
+	return data;
+}
+
+void save(vector<tube> tubes, vector<station> stations, string filename) {
+	ofstream file;
+	file.open(filename);
+	if (file)
+	{
+		file << tubes.size() << " " << stations.size() << endl;
+		for (int i = 0; i < tubes.size(); i++)
+			tubes[i].finfo(file);
+		for (int i = 0; i < stations.size(); i++)
+			stations[i].finfo(file);
+	}
+	else
+		perror("Requested file not found. Empty file loaded instead.");
+
+}
+
 int main()
 {
 	setlocale(LC_ALL, "Ru");
@@ -110,6 +162,7 @@ int main()
 	int fspers = -1;
 
 	int edit;
+	string filename;
 
 	while (mode)
 	{
@@ -129,11 +182,16 @@ int main()
 				break;
 
 			case 3:
-				cout << "Режим сохранения" << endl;
+				read(filename, cin, "Введите название сохранения (save по умолчанию)");
+				filename += ".txt";
+				save(tubes, stations, filename);
 				break;
 
 			case 4:
-				cout << "Режим закгрузки" << endl;
+				read(filename, cin, "Введите название сохранения (save по умолчанию)");
+				filename += ".txt";
+				tubes = load(filename).first;
+				stations = load(filename).second;
 				break;
 
 			case 0:
@@ -199,6 +257,8 @@ int main()
 			for (int i = 0; i < tubes.size(); i++)
 				if ((ftname == "" || tubes[i].name.find(ftname) != string::npos) && (ftstat == -1 || !!ftstat == tubes[i].status))
 					tubes[i].info();
+			if (tubes.size() == 0)
+				cout << "Труб не добавлено" << endl;
 
 			cout << endl;
 
@@ -252,6 +312,8 @@ int main()
 			for (int i = 0; i < stations.size(); i++)
 				if ((fsname == "" || stations[i].name.find(fsname) != string::npos) && (fspers == -1 || fspers <= (100 * stations[i].aworks / stations[i].tworks)))
 					stations[i].info();
+			if (stations.size() == 0)
+				cout << "Станций не добавлено" << endl;
 
 			cout << endl;
 
@@ -288,7 +350,7 @@ int main()
 			break;
 		}
 		
-
+		
 		
 	}
 }
