@@ -1,6 +1,8 @@
 #pragma once
 #include <string>
 #include <fstream>
+#include <vector>
+#include "tube.h"
 
 using namespace std;
 
@@ -16,5 +18,7 @@ public:
 	int tworks;
 	int aworks;
 	float efficiency;
+	vector<station> adjacent;
+	vector<tube> connections;
 };
 

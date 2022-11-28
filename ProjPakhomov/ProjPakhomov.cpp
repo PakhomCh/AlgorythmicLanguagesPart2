@@ -8,8 +8,8 @@
 #include <string>
 #include <vector>
 
-#include "tube.h"
 #include "station.h"
+#include "tube.h"
 
 using namespace std;
 
@@ -63,6 +63,7 @@ void menu(int blockid = 0) // 0 - END, 1 - MAIN MENU, 2 - CREATE MENU, 3 - VIEW 
 		cout << "2. Просмотреть элементы;" << endl;
 		cout << "3. Сохранить;" << endl;
 		cout << "4. Загрузить;" << endl;
+		cout << "5. Топологическая сортировка;" << endl;
 		cout << "0. Выход;" << endl;
 		break;
 
@@ -89,6 +90,7 @@ void menu(int blockid = 0) // 0 - END, 1 - MAIN MENU, 2 - CREATE MENU, 3 - VIEW 
 		cout << "1. Фильтровать компрессорные станции;" << endl;
 		cout << "2. Сбросить фильтр;" << endl;
 		cout << "3. Изменить компрессорную станцию;" << endl;
+		cout << "4. Соединить компрессорные станции;" << endl;
 		cout << "0. Выход;" << endl;
 		break;
 	}
@@ -146,12 +148,68 @@ void save(vector<tube> tubes, vector<station> stations, string filename) {
 
 }
 
+int min(vector <int> values)
+{
+	int min = values.back();
+	for (int i = 0; i < values.size(); i++)
+		min = (min < values[i]) ? min : values[i];
+	return min;
+}
+
+vector <int> topology(station point, vector<int> colors)
+{
+	if (colors[point.id - 1] == 0)
+		for (int i = 0; i < colors.size(); i ++)
+			colors[i] = 0;
+	if (colors[point.id - 1] > 0)
+	{
+		colors[point.id - 1] = 0;
+		for (int i = 0; i < point.adjacent.size(); i++)
+			colors = topology(point.adjacent[i], colors);
+		colors[point.id - 1] = min(colors) - 1;
+	}
+		
+	return colors;
+}
+
+void topocover(vector <station> stations)
+{
+	vector <int> colors;
+	vector <int> backmap;
+	for (int i = 0; i < stations.size(); i ++)
+		colors.push_back(1);
+	for (int i = 0; i < stations.size(); i ++)
+		colors = topology(stations[i], colors);
+	string order = "Порядок вершин: ";
+	if (colors.back() == 0)
+		read(order, cin, "Найден цикл. Нажмите любую клавишу, чтобы продолжить");
+	else
+	{
+		/*for (int i = 0; i < colors.size(); i++)
+			order += to_string(colors[i]) + " ";*/
+		while (backmap.size() < stations.size())
+		{
+			for (int i = 0; i < colors.size(); i ++)
+				if (backmap.size() * -1 - 1 == colors[i])
+				{
+					backmap.push_back(i);
+					break;
+				}
+		}
+		for (int i = backmap.size() - 1; i >= 0; i --)
+			order += to_string(backmap[i] + 1) + " ";
+		cout << order << endl;
+		read(order, cin, "Нажмите любую клавишу, чтобы продолжить");
+	}
+
+}
+
 int main()
 {
 	setlocale(LC_ALL, "Ru");
 
 	int mode = 1; // 0 - END, 1 - MAIN MENU, 2 - CREATE MENU, 3 - VIEW MENU, 4 - TUBE MENU, 5 - STATION MENU
-	int command;
+	int command, xcommand;
 	vector <tube> tubes;
 	vector <station> stations;
 
@@ -170,7 +228,7 @@ int main()
 		switch (mode)
 		{
 		case 1: // MAIN MENU
-			read<int>(command, cin, "Выберите команду", 0, 4);
+			read<int>(command, cin, "Выберите команду", 0, 5);
 			switch (command)
 			{
 			case 1:
@@ -192,6 +250,11 @@ int main()
 				filename += ".txt";
 				tubes = load(filename).first;
 				stations = load(filename).second;
+				break;
+
+			case 5:
+				if(stations.size())
+					topocover(stations);
 				break;
 
 			case 0:
@@ -317,7 +380,7 @@ int main()
 
 			cout << endl;
 
-			read<int>(command, cin, "Выберите команду", 0, 3);
+			read<int>(command, cin, "Выберите команду", 0, 4);
 			switch (command)
 			{
 			case 1:
@@ -342,6 +405,41 @@ int main()
 						break;
 					}
 				break;
+
+			case 4:
+				read<int>(command, cin, "Введите ID начальной компрессорной станции", 1, stations.size());
+				read<int>(xcommand, cin, "Введите ID конечной компрессорной станции", 1, stations.size());
+				for (int i = 0; i < stations.size(); i ++)
+					for (int j = 0; j < stations.size(); j++)
+						if ((stations[i].id == command) && (stations[j].id == xcommand) && (i != j))
+						{
+							read<int>(command, cin, "Введите диаметр трубы для соединения", 1);
+							xcommand = 1;
+							for (int k = 0; k < tubes.size(); k ++)
+								if (tubes[k].diameter == command)
+								{
+									xcommand = 0;
+									stations[i].adjacent.push_back(stations[j]);
+									stations[i].connections.push_back(tubes[k]);
+								}
+							if (xcommand)
+							{
+								read<int>(xcommand, cin, "Труба такого диаметра не найдена, создать новую? (1 - да, 0 - нет)", 0, 1);
+								if (xcommand)
+								{
+									tubes.push_back(tube());
+									backtube.id = tubes.size();
+
+									read(backtube.name, cin, "Введите название трубы");
+									read<int>(backtube.length, cin, "Введите длину трубы", 1);
+									backtube.diameter = command;
+									read<bool>(backtube.status, cin, "Введите статус трубы (1 - Работает, 0 - Нет)");
+									stations[i].adjacent.push_back(stations[j]);
+									stations[i].connections.push_back(backtube);
+								}
+							}
+
+						}
 
 			case 0:
 				mode = 3;
